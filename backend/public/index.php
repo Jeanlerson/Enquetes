@@ -8,15 +8,16 @@ require __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
+// Criar aplicação Slim
 $app = AppFactory::create();
-
-// Carregar configurações
-(require __DIR__ . '/../src/Config/settings.php')($app);
 
 // Carregar middlewares
 $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
+
+// Carregar configurações
+//(require __DIR__ . '/../src/Config/settings.php')($app);
 
 // Carregar rotas
 (require __DIR__ . '/../src/Routes/routes.php')($app);
