@@ -9,10 +9,10 @@ class Database {
 
     public static function getConnection(): PDO {
         if (self::$connection === null) {
-            $host = getenv('DB_HOST');
-            $dbname = getenv('DB_NAME');
-            $user = getenv('DB_USER');
-            $password = getenv('DB_PASS');
+            $host = $_ENV['DB_HOST'] ?? 'localhost';
+            $dbname = $_ENV['DB_NAME'] ?? '';
+            $user = $_ENV['DB_USER'] ?? '';
+            $password = $_ENV['DB_PASS'] ?? '';
 
             $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
 
