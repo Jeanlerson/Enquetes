@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 export default function PollDetails() {
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const [poll, setPoll] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
@@ -14,6 +15,12 @@ export default function PollDetails() {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState('Conectando...');
+
+  const isOwner = Boolean(
+    user
+    && poll
+    && Number(user.id) === Number(poll.author.id),
+  );
 
   useEffect(() => {
     async function loadPoll() {
@@ -129,6 +136,27 @@ export default function PollDetails() {
     );
   }
 
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      'Tem certeza de que deseja excluir esta enquete?',
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.delete(`/polls/${id}`);
+      navigate('/');
+    } catch (error) {
+      setIsError(true);
+      setMessage(
+        error.response?.data?.message
+          || 'Não foi possível excluir a enquete.',
+      );
+    }
+  }
+
   return (
     <section className="poll-details">
       <div className="poll-details-header">
@@ -151,6 +179,25 @@ export default function PollDetails() {
               {poll.is_expired ? 'Encerrada' : 'Ativa'}
             </span>
           </div>
+
+          {isOwner && (
+            <div className="owner-actions">
+              <Link
+                to={`/polls/${poll.id}/edit`}
+                className="secondary-link"
+              >
+                Editar enquete
+              </Link>
+
+              <button
+                type="button"
+                className="danger-button"
+                onClick={handleDelete}
+              >
+                Excluir enquete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

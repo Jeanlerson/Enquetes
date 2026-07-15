@@ -10,6 +10,7 @@ import Login from './pages/Login';
 import PollDetails from './pages/PollDetails';
 import PollList from './pages/PollList';
 import Register from './pages/Register';
+import EditPoll from './pages/EditPoll';
 
 export default function App() {
   return (
@@ -32,6 +33,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <CreatePoll />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/polls/:id/edit"
+            element={
+              <ProtectedRoute>
+                <EditPoll />
               </ProtectedRoute>
             }
           />

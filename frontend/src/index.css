@@ -476,3 +476,45 @@ select {
     grid-template-columns: 1fr;
   }
 }
+
+
+.owner-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.secondary-link,
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.secondary-link {
+  color: #3056d3;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+}
+
+.danger-button {
+  color: #ffffff;
+  background: #b42318;
+  border: 1px solid #b42318;
+  cursor: pointer;
+}
+
+.danger-button:hover {
+  background: #912018;
+}
+
+.form-help {
+  margin: 16px 0 0;
+  color: #667085;
+  font-size: 14px;
+}
