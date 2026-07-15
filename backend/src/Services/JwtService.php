@@ -29,13 +29,9 @@ class JwtService
         $issuedAt = time();
 
         $payload = [
-            //momento em que o token foi criado
             'iat' => $issuedAt,
-            //momento em que o token expira
             'exp' => $issuedAt + $this->expiration,
-            //identificador do usuário
             'sub' => (int) $user['id'],
-            //informações do usuário
             'user' => [
                 'id' => (int) $user['id'],
                 'name' => $user['name'],
