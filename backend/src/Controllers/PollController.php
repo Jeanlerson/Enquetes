@@ -293,4 +293,53 @@ class PollController
             );
         }
     }
+
+    public function results(
+        Request $request,
+        Response $response,
+        array $args
+    ): Response {
+        try {
+            $pollId = (int) ($args['id'] ?? 0);
+
+            $results = $this->service->getResults($pollId);
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'data' => $results
+                ],
+                200
+            );
+        } catch (InvalidArgumentException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                422
+            );
+        } catch (RuntimeException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                404
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível carregar os resultados.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
+    }
 }

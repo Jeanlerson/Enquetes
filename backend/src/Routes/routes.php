@@ -296,4 +296,22 @@ return function ($app) {
             'application/json'
         );
     });
+
+    $app->get('/polls/{id:[0-9]+}/results', function (
+        $request,
+        $response,
+        $args
+    ) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->results(
+            $request,
+            $response,
+            $args
+        );
+    });
 };

@@ -290,4 +290,30 @@ class PollService
 
         $this->pollModel->delete($pollId);
     }
+
+    public function getResults(int $pollId): array
+    {
+        $poll = $this->getById($pollId);
+
+        $results = array_map(
+            function (array $option): array {
+                return [
+                    'option_id' => $option['id'],
+                    'option' => $option['text'],
+                    'votes' => $option['votes_count'],
+                    'percentage' => $option['percentage']
+                ];
+            },
+            $poll['options']
+        );
+
+        return [
+            'poll_id' => $poll['id'],
+            'title' => $poll['title'],
+            'total_votes' => $poll['total_votes'],
+            'expires_at' => $poll['expires_at'],
+            'is_expired' => $poll['is_expired'],
+            'results' => $results
+        ];
+    }
 }

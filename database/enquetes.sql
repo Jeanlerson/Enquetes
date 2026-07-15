@@ -35,3 +35,41 @@ CREATE TABLE votes (
     CONSTRAINT fk_user_vote FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT unique_user_poll UNIQUE (user_id, poll_id)
 );
+
+SELECT id, name, email, password
+FROM users;
+
+SELECT * FROM polls;
+SELECT * FROM options;
+SELECT * FROM votes;
+
+ALTER TABLE options
+DROP FOREIGN KEY fk_poll;
+
+ALTER TABLE options
+ADD CONSTRAINT fk_poll
+FOREIGN KEY (poll_id)
+REFERENCES polls(id)
+ON DELETE CASCADE;
+
+ALTER TABLE votes
+DROP FOREIGN KEY fk_poll_vote;
+
+ALTER TABLE votes
+DROP FOREIGN KEY fk_option_vote;
+
+ALTER TABLE votes
+ADD CONSTRAINT fk_poll_vote
+FOREIGN KEY (poll_id)
+REFERENCES polls(id)
+ON DELETE CASCADE;
+
+ALTER TABLE votes
+ADD CONSTRAINT fk_option_vote
+FOREIGN KEY (option_id)
+REFERENCES options(id)
+ON DELETE CASCADE;
+
+SELECT * FROM polls WHERE id = 2;
+SELECT * FROM options WHERE poll_id = 2;
+SELECT * FROM votes WHERE poll_id = 2;
