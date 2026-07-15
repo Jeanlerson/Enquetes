@@ -48,51 +48,17 @@ export default function PollDetails() {
   }, [id]);
 
   useEffect(() => {
-    if (!poll) {
-      return undefined;
-    }
+    refreshResults();
 
-    const sseUrl = import.meta.env.VITE_SSE_URL;
-
-    const eventSource = new EventSource(
-      `${sseUrl}/stream.php?poll_id=${id}`,
+    const intervalId = setInterval(
+      refreshResults,
+      3000,
     );
-
-    eventSource.onopen = () => {
-      setRealtimeStatus('Resultados atualizados em tempo real');
-    };
-
-    eventSource.addEventListener(
-      'poll-results',
-      (event) => {
-        const response = JSON.parse(event.data);
-        const results = response.data;
-
-        setPoll((currentPoll) => ({
-          ...currentPoll,
-          total_votes: results.total_votes,
-          expires_at: results.expires_at,
-          is_expired: results.is_expired,
-          options: results.results.map((result) => ({
-            id: result.option_id,
-            text: result.option,
-            votes_count: result.votes,
-            percentage: result.percentage,
-          })),
-        }));
-      },
-    );
-
-    eventSource.onerror = () => {
-      setRealtimeStatus(
-        'Tentando restabelecer a conexão em tempo real...',
-      );
-    };
 
     return () => {
-      eventSource.close();
+      clearInterval(intervalId);
     };
-  }, [id, poll?.id]);
+  }, [id]);
 
   const isOwner = Boolean(
     user
@@ -120,6 +86,24 @@ export default function PollDetails() {
       : null;
   }, [poll]);
 
+  async function refreshResults() {
+    const response = await api.get(`/polls/${id}/results`);
+    const results = response.data.data;
+
+    setPoll((currentPoll) => ({
+      ...currentPoll,
+      total_votes: results.total_votes,
+      expires_at: results.expires_at,
+      is_expired: results.is_expired,
+      options: results.results.map((result) => ({
+        id: result.option_id,
+        text: result.option,
+        votes_count: result.votes,
+        percentage: result.percentage,
+      })),
+    }));
+  }
+
   async function handleVote(event) {
     event.preventDefault();
 
@@ -143,6 +127,8 @@ export default function PollDetails() {
 
       setMessage(response.data.message);
       setSelectedOption('');
+
+      await refreshResults();
     } catch (error) {
       setIsError(true);
       setMessage(
