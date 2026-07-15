@@ -9,7 +9,8 @@ use RuntimeException;
 class UserService
 {
     public function __construct(
-        private User $userModel
+        private User $userModel,
+        private JwtService $jwtService
     ) {
     }
 
@@ -86,10 +87,15 @@ class UserService
             );
         }
 
-        return [
+        $authenticatedUser = [
             'id' => (int) $user['id'],
             'name' => $user['name'],
             'email' => $user['email']
         ];
-    }
+
+        return [
+            'user' => $authenticatedUser,
+            'token' => $this->jwtService->generate($authenticatedUser)
+        ];
+            }
 }

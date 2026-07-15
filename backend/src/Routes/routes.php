@@ -4,6 +4,8 @@ use App\Config\Database;
 use App\Controllers\UserController;
 use App\Models\User;
 use App\Services\UserService;
+use App\Services\JwtService;
+use App\Middleware\AuthMiddleware;
 
 return function ($app) {
 
@@ -18,12 +20,40 @@ return function ($app) {
         );
     });
 
+    $jwtService = new JwtService();
+
+    $authMiddleware = new AuthMiddleware(
+        $jwtService,
+        $app->getResponseFactory()
+    );
+
+    $app->get('/me', function ($request, $response) {
+        $user = $request->getAttribute('authenticatedUser');
+
+        $json = json_encode(
+            [
+                'success' => true,
+                'user' => $user
+            ],
+            JSON_UNESCAPED_UNICODE
+            | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        $response->getBody()->write($json);
+
+        return $response->withHeader(
+            'Content-Type',
+            'application/json; charset=utf-8'
+        );
+    })->add($authMiddleware);
+
     $app->post('/register', function ($request, $response) {
         try {
             $pdo = Database::getConnection();
 
             $userModel = new User($pdo);
-            $userService = new UserService($userModel);
+            $jwtService = new JwtService();
+            $userService = new UserService($userModel, $jwtService);
             $userController = new UserController($userService);
 
             return $userController->register($request, $response);
@@ -66,7 +96,8 @@ return function ($app) {
             $pdo = Database::getConnection();
 
             $userModel = new User($pdo);
-            $userService = new UserService($userModel);
+            $jwtService = new JwtService();
+            $userService = new UserService($userModel, $jwtService);
             $userController = new UserController($userService);
 
             return $userController->login($request, $response);

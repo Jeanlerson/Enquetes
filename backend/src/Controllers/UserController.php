@@ -70,14 +70,15 @@ class UserController
     ): Response {
         try {
             $data = (array) $request->getParsedBody();
-            $user = $this->service->login($data);
+            $result = $this->service->login($data);
 
             return $this->jsonResponse(
                 $response,
                 [
                     'success' => true,
                     'message' => 'Login realizado com sucesso.',
-                    'user' => $user
+                    'user' => $result['user'],
+                    'token' => $result['token']
                 ],
                 200
             );
