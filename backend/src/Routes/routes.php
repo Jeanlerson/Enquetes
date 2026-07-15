@@ -6,6 +6,9 @@ use App\Models\User;
 use App\Services\UserService;
 use App\Services\JwtService;
 use App\Middleware\AuthMiddleware;
+use App\Controllers\PollController;
+use App\Models\Poll;
+use App\Services\PollService;
 
 return function ($app) {
 
@@ -129,6 +132,16 @@ return function ($app) {
                 ->withStatus(500);
         }
     });
+
+    $app->post('/polls', function ($request, $response) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->create($request, $response);
+    })->add($authMiddleware);
 
     $app->get('/db-test', function ($request, $response) {
         try {

@@ -1,0 +1,90 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Services\PollService;
+use InvalidArgumentException;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Throwable;
+
+class PollController
+{
+    public function __construct(
+        private PollService $service
+    ) {
+    }
+
+    public function create(
+        Request $request,
+        Response $response
+    ): Response {
+        try {
+            $authenticatedUser = $request->getAttribute(
+                'authenticatedUser'
+            );
+
+            $data = (array) $request->getParsedBody();
+
+            $poll = $this->service->create(
+                $data,
+                (int) $authenticatedUser['id']
+            );
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'message' => 'Enquete criada com sucesso.',
+                    'poll' => $poll
+                ],
+                201
+            );
+        } catch (InvalidArgumentException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                422
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível criar a enquete.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
+    }
+
+    private function jsonResponse(
+        Response $response,
+        array $data,
+        int $status
+    ): Response {
+        $json = json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE
+            | JSON_UNESCAPED_SLASHES
+            | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        if ($json === false) {
+            $json = '{"success":false,"message":"Erro ao gerar JSON."}';
+        }
+
+        $response->getBody()->write($json);
+
+        return $response
+            ->withHeader(
+                'Content-Type',
+                'application/json; charset=utf-8'
+            )
+            ->withStatus($status);
+    }
+}
