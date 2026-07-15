@@ -10,7 +10,7 @@ use Dotenv\Dotenv;
 require __DIR__ . '/../vendor/autoload.php';
 
 $dotenv = Dotenv::createMutable(__DIR__ . '/..');
-$dotenv->load();
+$dotenv->safeLoad();
 
 header('Content-Type: text/event-stream; charset=utf-8');
 header('Cache-Control: no-cache');

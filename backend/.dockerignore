@@ -1,0 +1,6 @@
+.env
+vendor
+.git
+.gitignore
+README.md
+.env.docker

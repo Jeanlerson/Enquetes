@@ -4,27 +4,25 @@ use Dotenv\Dotenv;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-// Carregar variáveis de ambiente
 $dotenv = Dotenv::createMutable(__DIR__ . '/..');
-$dotenv->load();
+$dotenv->safeLoad();
 
-// Criar aplicação Slim
 $app = AppFactory::create();
 
-// Carregar middlewares
 $app->addBodyParsingMiddleware();
 $app->addRoutingMiddleware();
 $app->addErrorMiddleware(true, true, true);
 
-// Carregar configurações
-//(require __DIR__ . '/../src/Config/settings.php')($app);
-$app->add(function ($request, $handler) {
+$frontendUrl = $_ENV['FRONTEND_URL']
+    ?? 'http://localhost:5173';
+
+$app->add(function ($request, $handler) use ($frontendUrl) {
     $response = $handler->handle($request);
 
     return $response
         ->withHeader(
             'Access-Control-Allow-Origin',
-            'http://localhost:5173'
+            $frontendUrl
         )
         ->withHeader(
             'Access-Control-Allow-Headers',
@@ -36,7 +34,6 @@ $app->add(function ($request, $handler) {
         );
 });
 
-// Carregar rotas
 (require __DIR__ . '/../src/Routes/routes.php')($app);
 
 $app->run();
