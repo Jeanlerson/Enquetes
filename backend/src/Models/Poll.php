@@ -161,4 +161,43 @@ class Poll
 
         return $statement->fetchAll();
     }
+
+    public function update(
+        int $pollId,
+        string $title,
+        ?string $description,
+        ?string $expiresAt
+    ): bool {
+        $sql = '
+            UPDATE polls
+            SET
+                title = :title,
+                description = :description,
+                expires_at = :expires_at
+            WHERE id = :poll_id
+        ';
+
+        $statement = $this->db->prepare($sql);
+
+        return $statement->execute([
+            'title' => $title,
+            'description' => $description,
+            'expires_at' => $expiresAt,
+            'poll_id' => $pollId
+        ]);
+    }
+
+    public function delete(int $pollId): bool
+    {
+        $sql = '
+            DELETE FROM polls
+            WHERE id = :poll_id
+        ';
+
+        $statement = $this->db->prepare($sql);
+
+        return $statement->execute([
+            'poll_id' => $pollId
+        ]);
+    }
 }

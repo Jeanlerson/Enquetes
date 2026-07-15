@@ -240,6 +240,42 @@ return function ($app) {
             ->withStatus($status);
     });
 
+    $app->put('/polls/{id:[0-9]+}', function (
+        $request,
+        $response,
+        $args
+    ) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->update(
+            $request,
+            $response,
+            $args
+        );
+    })->add($authMiddleware);
+
+    $app->delete('/polls/{id:[0-9]+}', function (
+        $request,
+        $response,
+        $args
+    ) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->delete(
+            $request,
+            $response,
+            $args
+        );
+    })->add($authMiddleware);
+
     $app->get('/env-test', function ($request, $response) {
         $host = $_ENV['DB_HOST'] ?? '';
 

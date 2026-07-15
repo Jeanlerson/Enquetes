@@ -196,4 +196,98 @@ class PollService
             'options' => $formattedOptions
         ];
     }
+
+    public function update(
+        int $pollId,
+        int $userId,
+        array $data
+    ): array {
+        if ($pollId <= 0) {
+            throw new InvalidArgumentException(
+                'O identificador da enquete é inválido.'
+            );
+        }
+
+        $poll = $this->pollModel->findById($pollId);
+
+        if (!$poll) {
+            throw new RuntimeException(
+                'Enquete não encontrada.'
+            );
+        }
+
+        if ((int) $poll['user_id'] !== $userId) {
+            throw new RuntimeException(
+                'Você não tem permissão para editar esta enquete.'
+            );
+        }
+
+        $title = trim($data['title'] ?? '');
+        $description = trim($data['description'] ?? '');
+        $expiresAt = trim($data['expires_at'] ?? '');
+
+        if ($title === '') {
+            throw new InvalidArgumentException(
+                'O título da enquete é obrigatório.'
+            );
+        }
+
+        if ($expiresAt !== '') {
+            $expirationDate = \DateTime::createFromFormat(
+                'Y-m-d H:i:s',
+                $expiresAt
+            );
+
+            if (
+                !$expirationDate ||
+                $expirationDate->format('Y-m-d H:i:s') !== $expiresAt
+            ) {
+                throw new InvalidArgumentException(
+                    'A data de expiração deve usar o formato Y-m-d H:i:s.'
+                );
+            }
+
+            if ($expirationDate <= new \DateTime()) {
+                throw new InvalidArgumentException(
+                    'A data de expiração deve estar no futuro.'
+                );
+            }
+        }
+
+        $this->pollModel->update(
+            $pollId,
+            $title,
+            $description !== '' ? $description : null,
+            $expiresAt !== '' ? $expiresAt : null
+        );
+
+        return $this->getById($pollId);
+    }
+
+    public function delete(
+        int $pollId,
+        int $userId
+    ): void {
+        if ($pollId <= 0) {
+            throw new InvalidArgumentException(
+                'O identificador da enquete é inválido.'
+            );
+        }
+
+        $poll = $this->pollModel->findById($pollId);
+
+        if (!$poll) {
+            throw new RuntimeException(
+                'Enquete não encontrada.'
+            );
+        }
+
+        if ((int) $poll['user_id'] !== $userId) {
+            throw new RuntimeException(
+                'Você não tem permissão para excluir esta enquete.'
+            );
+        }
+
+        $this->pollModel->delete($pollId);
+    }
 }

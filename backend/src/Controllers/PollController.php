@@ -165,4 +165,132 @@ class PollController
             );
         }
     }
+
+    public function update(
+        Request $request,
+        Response $response,
+        array $args
+    ): Response {
+        try {
+            $pollId = (int) ($args['id'] ?? 0);
+
+            $authenticatedUser = $request->getAttribute(
+                'authenticatedUser'
+            );
+
+            $data = (array) $request->getParsedBody();
+
+            $poll = $this->service->update(
+                $pollId,
+                (int) $authenticatedUser['id'],
+                $data
+            );
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'message' => 'Enquete atualizada com sucesso.',
+                    'poll' => $poll
+                ],
+                200
+            );
+        } catch (InvalidArgumentException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                422
+            );
+        } catch (RuntimeException $error) {
+            $status = match ($error->getMessage()) {
+                'Enquete não encontrada.' => 404,
+                'Você não tem permissão para editar esta enquete.' => 403,
+                default => 400
+            };
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                $status
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível atualizar a enquete.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
+    }
+
+    public function delete(
+        Request $request,
+        Response $response,
+        array $args
+    ): Response {
+        try {
+            $pollId = (int) ($args['id'] ?? 0);
+
+            $authenticatedUser = $request->getAttribute(
+                'authenticatedUser'
+            );
+
+            $this->service->delete(
+                $pollId,
+                (int) $authenticatedUser['id']
+            );
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'message' => 'Enquete excluída com sucesso.'
+                ],
+                200
+            );
+        } catch (InvalidArgumentException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                422
+            );
+        } catch (RuntimeException $error) {
+            $status = match ($error->getMessage()) {
+                'Enquete não encontrada.' => 404,
+                'Você não tem permissão para excluir esta enquete.' => 403,
+                default => 400
+            };
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                $status
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível excluir a enquete.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
+    }
 }
