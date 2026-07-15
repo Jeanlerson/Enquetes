@@ -4,13 +4,13 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import LoadingState from '../components/ui/LoadingState';
 import Message from '../components/ui/Message';
 import StatusBadge from '../components/ui/StatusBadge';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 export default function PollDetails() {
   const { id } = useParams();
@@ -25,49 +25,110 @@ export default function PollDetails() {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [realtimeStatus, setRealtimeStatus] = useState(
-    'Conectando aos resultados em tempo real...',
+    'Resultados atualizados automaticamente',
   );
 
   useEffect(() => {
+    let active = true;
+
     async function loadPoll() {
+      setLoading(true);
+      setMessage('');
+      setIsError(false);
+
       try {
         const response = await api.get(`/polls/${id}`);
-        setPoll(response.data.poll);
+
+        if (active) {
+          setPoll(response.data.poll);
+        }
       } catch (error) {
-        setIsError(true);
-        setMessage(
-          error.response?.data?.message
-            || 'Não foi possível carregar a enquete.',
-        );
+        if (active) {
+          setPoll(null);
+          setIsError(true);
+          setMessage(
+            error.response?.data?.message
+              || 'Não foi possível carregar a enquete.',
+          );
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     }
 
     loadPoll();
-  }, [id]);
-
-  useEffect(() => {
-    refreshResults();
-
-    const intervalId = setInterval(
-      refreshResults,
-      3000,
-    );
 
     return () => {
-      clearInterval(intervalId);
+      active = false;
     };
   }, [id]);
+
+  async function refreshResults() {
+    try {
+      const response = await api.get(
+        `/polls/${id}/results`,
+      );
+
+      const results = response.data.data;
+
+      setPoll((currentPoll) => {
+        if (!currentPoll) {
+          return currentPoll;
+        }
+
+        return {
+          ...currentPoll,
+          total_votes: results.total_votes,
+          expires_at: results.expires_at,
+          is_expired: results.is_expired,
+          options: results.results.map((result) => ({
+            id: result.option_id,
+            text: result.option,
+            votes_count: result.votes,
+            percentage: result.percentage,
+          })),
+        };
+      });
+
+      setRealtimeStatus(
+        'Resultados atualizados automaticamente',
+      );
+    } catch {
+      setRealtimeStatus(
+        'Não foi possível atualizar os resultados.',
+      );
+    }
+  }
+
+  useEffect(() => {
+    if (!poll?.id) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (!document.hidden) {
+        refreshResults();
+      }
+    }, 10000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [poll?.id, id]);
 
   const isOwner = Boolean(
     user
     && poll
-    && Number(user.id) === Number(poll.author.id),
+    && Number(user.id) === Number(poll.author?.id),
   );
 
   const winningOptionId = useMemo(() => {
-    if (!poll?.options?.length || poll.total_votes === 0) {
+    if (
+      !poll?.options?.length
+      || Number(poll.total_votes) === 0
+    ) {
       return null;
     }
 
@@ -78,31 +139,15 @@ export default function PollDetails() {
     );
 
     const winners = poll.options.filter(
-      (option) => Number(option.votes_count) === highestVotes,
+      (option) => (
+        Number(option.votes_count) === highestVotes
+      ),
     );
 
     return winners.length === 1
       ? winners[0].id
       : null;
   }, [poll]);
-
-  async function refreshResults() {
-    const response = await api.get(`/polls/${id}/results`);
-    const results = response.data.data;
-
-    setPoll((currentPoll) => ({
-      ...currentPoll,
-      total_votes: results.total_votes,
-      expires_at: results.expires_at,
-      is_expired: results.is_expired,
-      options: results.results.map((result) => ({
-        id: result.option_id,
-        text: result.option,
-        votes_count: result.votes,
-        percentage: result.percentage,
-      })),
-    }));
-  }
 
   async function handleVote(event) {
     event.preventDefault();
@@ -176,16 +221,21 @@ export default function PollDetails() {
 
   if (!poll) {
     return (
-      <section className="empty-state">
-        <h1>Enquete não encontrada</h1>
+      <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Enquete não encontrada
+        </h1>
 
         {message && (
-          <p className="message error">
+          <Message>
             {message}
-          </p>
+          </Message>
         )}
 
-        <Link to="/" className="primary-link">
+        <Link
+          to="/"
+          className="mt-5 inline-flex rounded-xl bg-brand-500 px-5 py-3 font-bold text-white hover:bg-brand-600"
+        >
           Voltar para enquetes
         </Link>
       </section>
@@ -220,7 +270,7 @@ export default function PollDetails() {
               <span>
                 Criada por{' '}
                 <strong className="text-slate-700">
-                  {poll.author.name}
+                  {poll.author?.name}
                 </strong>
               </span>
 
@@ -228,7 +278,9 @@ export default function PollDetails() {
 
               {poll.expires_at && (
                 <span>
-                  {poll.is_expired ? 'Encerrada em ' : 'Expira em '}
+                  {poll.is_expired
+                    ? 'Encerrada em '
+                    : 'Expira em '}
                   {formatDate(poll.expires_at)}
                 </span>
               )}
@@ -246,40 +298,62 @@ export default function PollDetails() {
             )}
 
             <div className="mt-8 space-y-5">
-              {poll.options.map((option) => (
-                <div
-                  key={option.id}
-                  className="rounded-xl bg-slate-50 p-4"
-                >
-                  <div className="mb-3 flex justify-between gap-4">
-                    <div>
-                      <strong className="text-lg text-slate-900">
-                        {option.text}
-                      </strong>
+              {poll.options.map((option) => {
+                const isWinner =
+                  option.id === winningOptionId;
 
-                      <p className="mt-1 text-sm text-slate-500">
-                        {option.votes_count} voto(s)
-                      </p>
+                return (
+                  <div
+                    key={option.id}
+                    className={`
+                      rounded-xl border p-4
+                      ${
+                        isWinner
+                          ? 'border-brand-200 bg-brand-50'
+                          : 'border-transparent bg-slate-50'
+                      }
+                    `}
+                  >
+                    <div className="mb-3 flex justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <strong className="text-lg text-slate-900">
+                            {option.text}
+                          </strong>
+
+                          {isWinner && (
+                            <span className="rounded-full bg-brand-100 px-2 py-1 text-xs font-bold text-brand-700">
+                              Mais votada
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                          {option.votes_count} voto(s)
+                        </p>
+                      </div>
+
+                      <strong className="text-xl text-brand-500">
+                        {Number(
+                          option.percentage || 0,
+                        ).toFixed(2)}
+                        %
+                      </strong>
                     </div>
 
-                    <strong className="text-xl text-brand-500">
-                      {Number(
-                        option.percentage || 0,
-                      ).toFixed(2)}
-                      %
-                    </strong>
+                    <div className="h-3 overflow-hidden rounded-full bg-slate-200">
+                      <div
+                        className="h-full rounded-full bg-brand-500 transition-all duration-700"
+                        style={{
+                          width: `${
+                            option.percentage || 0
+                          }%`,
+                        }}
+                      />
+                    </div>
                   </div>
-
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-                    <div
-                      className="h-full rounded-full bg-brand-500 transition-all duration-700"
-                      style={{
-                        width: `${option.percentage || 0}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Card>
 
@@ -307,7 +381,8 @@ export default function PollDetails() {
                           flex cursor-pointer items-center gap-3
                           rounded-xl border p-4 transition
                           ${
-                            Number(selectedOption) === option.id
+                            Number(selectedOption)
+                              === option.id
                               ? 'border-brand-500 bg-brand-50 font-bold text-brand-700'
                               : 'border-slate-200 hover:border-brand-200 hover:bg-slate-50'
                           }
@@ -318,10 +393,13 @@ export default function PollDetails() {
                           name="option"
                           value={option.id}
                           checked={
-                            Number(selectedOption) === option.id
+                            Number(selectedOption)
+                              === option.id
                           }
                           onChange={(event) => {
-                            setSelectedOption(event.target.value);
+                            setSelectedOption(
+                              event.target.value,
+                            );
                           }}
                         />
 
@@ -348,7 +426,7 @@ export default function PollDetails() {
 
                   <Link
                     to="/login"
-                    className="mt-4 inline-flex rounded-xl bg-brand-500 px-5 py-3 font-bold text-white"
+                    className="mt-4 inline-flex rounded-xl bg-brand-500 px-5 py-3 font-bold text-white hover:bg-brand-600"
                   >
                     Entrar
                   </Link>
@@ -381,12 +459,16 @@ export default function PollDetails() {
 
               <SummaryItem
                 label="Status"
-                value={poll.is_expired ? 'Finalizada' : 'Ativa'}
+                value={
+                  poll.is_expired
+                    ? 'Finalizada'
+                    : 'Ativa'
+                }
               />
 
               <SummaryItem
                 label="Criador"
-                value={poll.author.name}
+                value={poll.author?.name}
               />
             </dl>
           </Card>
@@ -402,18 +484,14 @@ export default function PollDetails() {
               </h2>
 
               <p className="mt-2 leading-6 text-slate-600">
-                Apenas o criador pode editar ou excluir esta enquete.
+                Apenas o criador pode editar ou excluir esta
+                enquete.
               </p>
 
               <div className="mt-5 grid gap-3">
                 <Link
                   to={`/polls/${poll.id}/edit`}
-                  className="
-                    inline-flex items-center justify-center
-                    rounded-xl bg-brand-100 px-4 py-3
-                    font-bold text-brand-700
-                    hover:bg-brand-200
-                  "
+                  className="inline-flex items-center justify-center rounded-xl bg-brand-100 px-4 py-3 font-bold text-brand-700 hover:bg-brand-200"
                 >
                   Editar enquete
                 </Link>
