@@ -1,0 +1,84 @@
+.create-poll-page {
+  display: grid;
+  place-items: center;
+}
+
+.create-poll-form {
+  width: min(100%, 720px);
+}
+
+.create-poll-form textarea {
+  resize: vertical;
+}
+
+.options-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.options-heading h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.options-heading p {
+  margin: 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.create-option-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.create-option-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.secondary-button,
+.remove-option-button {
+  padding: 10px 14px;
+  border: 1px solid #cfd6e2;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.secondary-button {
+  color: #3056d3;
+  background: #ffffff;
+}
+
+.remove-option-button {
+  color: #842029;
+  background: #fff5f5;
+}
+
+.secondary-button:disabled,
+.remove-option-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.form-help {
+  margin: 16px 0 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+@media (max-width: 620px) {
+  .options-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .create-option-row {
+    grid-template-columns: 1fr;
+  }
+}

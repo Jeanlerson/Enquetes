@@ -1,0 +1,57 @@
+.auth-page {
+  display: grid;
+  min-height: calc(100vh - 160px);
+  place-items: center;
+}
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 420px);
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(23, 32, 51, 0.08);
+}
+
+.form-card h1 {
+  margin-top: 0;
+}
+
+.form-card label {
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.form-card input,
+.form-card textarea,
+.form-card select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cfd6e2;
+  border-radius: 8px;
+  outline: none;
+}
+
+.form-card input:focus,
+.form-card textarea:focus,
+.form-card select:focus {
+  border-color: #3056d3;
+}
+
+.form-card button {
+  margin-top: 24px;
+  padding: 12px 18px;
+  color: #ffffff;
+  background: #3056d3;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.form-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}

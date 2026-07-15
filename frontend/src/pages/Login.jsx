@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/auth.css';
 
 export default function Login() {
   const navigate = useNavigate();

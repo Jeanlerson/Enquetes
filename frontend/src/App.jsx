@@ -17,7 +17,7 @@ export default function App() {
     <>
       <Header />
 
-      <main className="container">
+      <main className="mx-auto w-full max-w-[1180px] px-4 py-10 md:px-8">
         <Routes>
           <Route path="/" element={<PollList />} />
           <Route path="/login" element={<Login />} />
