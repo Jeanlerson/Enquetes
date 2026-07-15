@@ -7,12 +7,10 @@ $path = parse_url(
     PHP_URL_PATH
 );
 
+$path = urldecode($path ?: '/');
 $file = __DIR__ . $path;
 
-if (
-    $path !== '/'
-    && is_file($file)
-) {
+if ($path !== '/' && file_exists($file) && !is_dir($file)) {
     return false;
 }
 
