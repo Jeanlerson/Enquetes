@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Teste SSE</title>
+
+    <style>
+        body {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        .status {
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        pre {
+            padding: 16px;
+            overflow: auto;
+            background: #f4f4f4;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Teste de resultados em tempo real</h1>
+
+    <div id="status" class="status">
+        Conectando ao servidor...
+    </div>
+
+    <pre id="results">Aguardando resultados...</pre>
+
+    <script>
+        const pollId = 4;
+
+        const statusElement =
+            document.getElementById('status');
+
+        const resultsElement =
+            document.getElementById('results');
+
+        const eventSource = new EventSource(
+            `http://localhost:8001/stream.php?poll_id=${pollId}`
+        );
+
+        eventSource.onopen = () => {
+            statusElement.textContent =
+                'Conexão em tempo real estabelecida.';
+        };
+
+        eventSource.addEventListener(
+            'poll-results',
+            (event) => {
+                const response = JSON.parse(event.data);
+
+                resultsElement.textContent =
+                    JSON.stringify(response, null, 2);
+            }
+        );
+
+        eventSource.addEventListener(
+            'error',
+            (event) => {
+                /*
+                 * Um evento personalizado chamado "error"
+                 * pode possuir dados. Erros nativos de conexão,
+                 * normalmente, não possuem event.data.
+                 */
+                if (event.data) {
+                    const response = JSON.parse(event.data);
+
+                    statusElement.textContent =
+                        response.message;
+
+                    return;
+                }
+
+                statusElement.textContent =
+                    'Conexão interrompida. Tentando reconectar...';
+            }
+        );
+    </script>
+</body>
+</html>
