@@ -2,13 +2,16 @@
 
 use App\Config\Database;
 use App\Controllers\UserController;
+use App\Controllers\PollController;
+use App\Controllers\VoteController;
 use App\Models\User;
+use App\Models\Poll;
+use App\Models\Vote;
 use App\Services\UserService;
 use App\Services\JwtService;
-use App\Middleware\AuthMiddleware;
-use App\Controllers\PollController;
-use App\Models\Poll;
 use App\Services\PollService;
+use App\Services\VoteService;
+use App\Middleware\AuthMiddleware;
 
 return function ($app) {
 
@@ -152,6 +155,32 @@ return function ($app) {
 
         return $pollController->index($request, $response);
     });
+
+    $app->post('/polls/{id:[0-9]+}/vote', function (
+        $request,
+        $response,
+        $args
+    ) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $voteModel = new Vote($pdo);
+
+        $voteService = new VoteService(
+            $voteModel,
+            $pollModel
+        );
+
+        $voteController = new VoteController(
+            $voteService
+        );
+
+        return $voteController->create(
+            $request,
+            $response,
+            $args
+        );
+    })->add($authMiddleware);
 
     $app->get('/polls/{id:[0-9]+}', function (
         $request,
