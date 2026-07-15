@@ -62,6 +62,34 @@ class PollController
         }
     }
 
+    public function index(
+        Request $request,
+        Response $response
+    ): Response {
+        try {
+            $polls = $this->service->getAll();
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'polls' => $polls
+                ],
+                200
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível listar as enquetes.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
+    }
+
     private function jsonResponse(
         Response $response,
         array $data,

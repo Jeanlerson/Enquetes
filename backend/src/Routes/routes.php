@@ -143,6 +143,16 @@ return function ($app) {
         return $pollController->create($request, $response);
     })->add($authMiddleware);
 
+    $app->get('/polls', function ($request, $response) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->index($request, $response);
+    });
+
     $app->get('/db-test', function ($request, $response) {
         try {
             $pdo = Database::getConnection();

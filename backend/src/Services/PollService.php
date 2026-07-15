@@ -97,4 +97,40 @@ class PollService
             'options' => $options
         ];
     }
+
+    public function getAll(): array
+    {
+        $polls = $this->pollModel->findAll();
+
+        return array_map(
+            function (array $poll): array {
+                return [
+                    'id' => (int) $poll['id'],
+                    'title' => $poll['title'],
+                    'description' => $poll['description'],
+                    'expires_at' => $poll['expires_at'],
+                    'created_at' => $poll['created_at'],
+                    'author' => [
+                        'id' => (int) $poll['user_id'],
+                        'name' => $poll['author_name']
+                    ],
+                    'options_count' => (int) $poll['options_count'],
+                    'votes_count' => (int) $poll['votes_count'],
+                    'is_expired' => $this->isExpired(
+                        $poll['expires_at']
+                    )
+                ];
+            },
+            $polls
+        );
+    }
+
+    private function isExpired(?string $expiresAt): bool
+    {
+        if ($expiresAt === null) {
+            return false;
+        }
+
+        return new \DateTime($expiresAt) <= new \DateTime();
+    }
 }

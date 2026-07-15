@@ -72,4 +72,40 @@ class Poll
             throw $error;
         }
     }
+
+    public function findAll(): array
+    {
+        $sql = '
+            SELECT
+                polls.id,
+                polls.user_id,
+                polls.title,
+                polls.description,
+                polls.expires_at,
+                polls.created_at,
+                users.name AS author_name,
+                COUNT(DISTINCT options.id) AS options_count,
+                COUNT(DISTINCT votes.id) AS votes_count
+            FROM polls
+            INNER JOIN users
+                ON users.id = polls.user_id
+            LEFT JOIN options
+                ON options.poll_id = polls.id
+            LEFT JOIN votes
+                ON votes.poll_id = polls.id
+            GROUP BY
+                polls.id,
+                polls.user_id,
+                polls.title,
+                polls.description,
+                polls.expires_at,
+                polls.created_at,
+                users.name
+            ORDER BY polls.created_at DESC
+        ';
+
+        $statement = $this->db->query($sql);
+
+        return $statement->fetchAll();
+    }
 }
