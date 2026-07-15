@@ -4,6 +4,14 @@ Sistema Full Stack para criação, gerenciamento e votação em enquetes com atu
 
 ---
 
+## Deploy
+
+Frontend:
+https://enquetes-ten.vercel.app/
+
+Backend:
+https://enquetes-production.up.railway.app/
+
 ## Sobre o Projeto
 
 O Enquetes Tec é uma aplicação web que permite:
