@@ -1,7 +1,9 @@
 <?php
-use App\Controllers\UserController;
-use App\Services\UserService;
+
 use App\Config\Database;
+use App\Controllers\UserController;
+use App\Models\User;
+use App\Services\UserService;
 
 return function ($app) {
 
@@ -14,6 +16,87 @@ return function ($app) {
             'Content-Type',
             'application/json'
         );
+    });
+
+    $app->post('/register', function ($request, $response) {
+        try {
+            $pdo = Database::getConnection();
+
+            $userModel = new User($pdo);
+            $userService = new UserService($userModel);
+            $userController = new UserController($userService);
+
+            return $userController->register($request, $response);
+        } catch (\Throwable $error) {
+            $data = [
+                'success' => false,
+                'message' => 'Erro interno ao processar o cadastro.',
+                'debug' => mb_convert_encoding(
+                    $error->getMessage(),
+                    'UTF-8',
+                    'UTF-8, Windows-1252, ISO-8859-1'
+                )
+            ];
+
+            $json = json_encode(
+                $data,
+                JSON_UNESCAPED_UNICODE
+                | JSON_UNESCAPED_SLASHES
+                | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+
+            // Proteção adicional para nunca enviar false ao write().
+            if ($json === false) {
+                $json = '{"success":false,"message":"Erro ao gerar resposta JSON."}';
+            }
+
+            $response->getBody()->write($json);
+
+            return $response
+                ->withHeader(
+                    'Content-Type',
+                    'application/json; charset=utf-8'
+                )
+                ->withStatus(500);
+        }
+    });
+
+    $app->post('/login', function ($request, $response) {
+        try {
+            $pdo = Database::getConnection();
+
+            $userModel = new User($pdo);
+            $userService = new UserService($userModel);
+            $userController = new UserController($userService);
+
+            return $userController->login($request, $response);
+        } catch (\Throwable $error) {
+            $data = [
+                'success' => false,
+                'message' => 'Erro interno ao processar o login.',
+                'debug' => $error->getMessage()
+            ];
+
+            $json = json_encode(
+                $data,
+                JSON_UNESCAPED_UNICODE
+                | JSON_UNESCAPED_SLASHES
+                | JSON_INVALID_UTF8_SUBSTITUTE
+            );
+
+            if ($json === false) {
+                $json = '{"success":false,"message":"Erro ao gerar resposta JSON."}';
+            }
+
+            $response->getBody()->write($json);
+
+            return $response
+                ->withHeader(
+                    'Content-Type',
+                    'application/json; charset=utf-8'
+                )
+                ->withStatus(500);
+        }
     });
 
     $app->get('/db-test', function ($request, $response) {
@@ -38,21 +121,42 @@ return function ($app) {
             $status = 500;
         }
 
-        $response->getBody()->write(json_encode($data));
+        $json = json_encode(
+            $data,
+            JSON_UNESCAPED_UNICODE
+            | JSON_UNESCAPED_SLASHES
+            | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        if ($json === false) {
+            $json = '{"success":false,"message":"Erro ao gerar JSON."}';
+        }
+
+        $response->getBody()->write($json);
 
         return $response
-            ->withHeader('Content-Type', 'application/json')
+            ->withHeader('Content-Type', 'application/json; charset=utf-8')
             ->withStatus($status);
     });
-};
-    
 
-    /*
-    $container = $app->getContainer();
+    $app->get('/env-test', function ($request, $response) {
+        $host = $_ENV['DB_HOST'] ?? '';
 
-    $app->get('/users', function ($request, $response) use ($container) {
-        $service = new UserService($container->get('db'));
-        $controller = new UserController($service);
-        return $controller->index($request, $response);
+        $data = [
+            'host' => $host,
+            'host_debug' => '[' . $host . ']',
+            'host_length' => strlen($host),
+            'host_hex' => bin2hex($host),
+            'port' => $_ENV['DB_PORT'] ?? null
+        ];
+
+        $response->getBody()->write(
+            json_encode($data, JSON_UNESCAPED_UNICODE)
+        );
+
+        return $response->withHeader(
+            'Content-Type',
+            'application/json'
+        );
     });
-    */
+};

@@ -5,7 +5,7 @@ use Dotenv\Dotenv;
 require __DIR__ . '/../vendor/autoload.php';
 
 // Carregar variáveis de ambiente
-$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
+$dotenv = Dotenv::createMutable(__DIR__ . '/..');
 $dotenv->load();
 
 // Criar aplicação Slim
