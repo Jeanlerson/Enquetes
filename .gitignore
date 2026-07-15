@@ -1,6 +1,11 @@
-/backend/vendor/
-/backend/.env
-/frontend/node_modules/
-/frontend/dist/
-.DS_Store
+/vendor/
+/node_modules/
+
+.env
+.env.local
+
+.idea/
+.vscode/
+
 Thumbs.db
+.DS_Store
