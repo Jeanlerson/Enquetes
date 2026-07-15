@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use RuntimeException;
 use Throwable;
+use App\Helpers\JsonResponse;
 
 class VoteController
 {
@@ -76,7 +77,6 @@ class VoteController
                 [
                     'success' => false,
                     'message' => 'Não foi possível registrar o voto.',
-                    'debug' => $error->getMessage()
                 ],
                 500
             );

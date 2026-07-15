@@ -1,317 +1,165 @@
 <?php
 
 use App\Config\Database;
-use App\Controllers\UserController;
 use App\Controllers\PollController;
+use App\Controllers\UserController;
 use App\Controllers\VoteController;
-use App\Models\User;
+use App\Helpers\JsonResponse;
+use App\Middleware\AuthMiddleware;
 use App\Models\Poll;
+use App\Models\User;
 use App\Models\Vote;
-use App\Services\UserService;
 use App\Services\JwtService;
 use App\Services\PollService;
+use App\Services\UserService;
 use App\Services\VoteService;
-use App\Middleware\AuthMiddleware;
 
 return function ($app) {
-
-    $app->get('/', function ($request, $response) {
-        $response->getBody()->write(json_encode([
-            'message' => 'API funcionando!'
-        ]));
-
-        return $response->withHeader(
-            'Content-Type',
-            'application/json'
-        );
-    });
+    /*
+     * Dependências compartilhadas
+     */
+    $pdo = Database::getConnection();
 
     $jwtService = new JwtService();
 
+    /*
+     * Usuários e autenticação
+     */
+    $userModel = new User($pdo);
+
+    $userService = new UserService(
+        $userModel,
+        $jwtService
+    );
+
+    $userController = new UserController(
+        $userService
+    );
+
+    /*
+     * Enquetes
+     */
+    $pollModel = new Poll($pdo);
+
+    $pollService = new PollService(
+        $pollModel
+    );
+
+    $pollController = new PollController(
+        $pollService
+    );
+
+    /*
+     * Votos
+     */
+    $voteModel = new Vote($pdo);
+
+    $voteService = new VoteService(
+        $voteModel,
+        $pollModel
+    );
+
+    $voteController = new VoteController(
+        $voteService
+    );
+
+    /*
+     * Middleware
+     */
     $authMiddleware = new AuthMiddleware(
         $jwtService,
         $app->getResponseFactory()
     );
 
-    $app->get('/me', function ($request, $response) {
-        $user = $request->getAttribute('authenticatedUser');
+    /*
+     * Saúde da API
+     */
+    $app->get('/health', function (
+        $request,
+        $response
+    ) {
+        return JsonResponse::create(
+            $response,
+            [
+                'success' => true,
+                'message' => 'API funcionando.'
+            ],
+            200
+        );
+    });
 
-        $json = json_encode(
+    /*
+     * Autenticação
+     */
+    $app->post(
+        '/register',
+        [$userController, 'register']
+    );
+
+    $app->post(
+        '/login',
+        [$userController, 'login']
+    );
+
+    $app->get('/me', function (
+        $request,
+        $response
+    ) {
+        $user = $request->getAttribute(
+            'authenticatedUser'
+        );
+
+        return JsonResponse::create(
+            $response,
             [
                 'success' => true,
                 'user' => $user
             ],
-            JSON_UNESCAPED_UNICODE
-            | JSON_INVALID_UTF8_SUBSTITUTE
-        );
-
-        $response->getBody()->write($json);
-
-        return $response->withHeader(
-            'Content-Type',
-            'application/json; charset=utf-8'
+            200
         );
     })->add($authMiddleware);
 
-    $app->post('/register', function ($request, $response) {
-        try {
-            $pdo = Database::getConnection();
+    /*
+     * Enquetes públicas
+     */
+    $app->get(
+        '/polls',
+        [$pollController, 'index']
+    );
 
-            $userModel = new User($pdo);
-            $jwtService = new JwtService();
-            $userService = new UserService($userModel, $jwtService);
-            $userController = new UserController($userService);
+    $app->get(
+        '/polls/{id:[0-9]+}',
+        [$pollController, 'show']
+    );
 
-            return $userController->register($request, $response);
-        } catch (\Throwable $error) {
-            $data = [
-                'success' => false,
-                'message' => 'Erro interno ao processar o cadastro.',
-                'debug' => mb_convert_encoding(
-                    $error->getMessage(),
-                    'UTF-8',
-                    'UTF-8, Windows-1252, ISO-8859-1'
-                )
-            ];
+    $app->get(
+        '/polls/{id:[0-9]+}/results',
+        [$pollController, 'results']
+    );
 
-            $json = json_encode(
-                $data,
-                JSON_UNESCAPED_UNICODE
-                | JSON_UNESCAPED_SLASHES
-                | JSON_INVALID_UTF8_SUBSTITUTE
-            );
+    /*
+     * Enquetes protegidas
+     */
+    $app->post(
+        '/polls',
+        [$pollController, 'create']
+    )->add($authMiddleware);
 
-            // Proteção adicional para nunca enviar false ao write().
-            if ($json === false) {
-                $json = '{"success":false,"message":"Erro ao gerar resposta JSON."}';
-            }
+    $app->put(
+        '/polls/{id:[0-9]+}',
+        [$pollController, 'update']
+    )->add($authMiddleware);
 
-            $response->getBody()->write($json);
+    $app->delete(
+        '/polls/{id:[0-9]+}',
+        [$pollController, 'delete']
+    )->add($authMiddleware);
 
-            return $response
-                ->withHeader(
-                    'Content-Type',
-                    'application/json; charset=utf-8'
-                )
-                ->withStatus(500);
-        }
-    });
-
-    $app->post('/login', function ($request, $response) {
-        try {
-            $pdo = Database::getConnection();
-
-            $userModel = new User($pdo);
-            $jwtService = new JwtService();
-            $userService = new UserService($userModel, $jwtService);
-            $userController = new UserController($userService);
-
-            return $userController->login($request, $response);
-        } catch (\Throwable $error) {
-            $data = [
-                'success' => false,
-                'message' => 'Erro interno ao processar o login.',
-                'debug' => $error->getMessage()
-            ];
-
-            $json = json_encode(
-                $data,
-                JSON_UNESCAPED_UNICODE
-                | JSON_UNESCAPED_SLASHES
-                | JSON_INVALID_UTF8_SUBSTITUTE
-            );
-
-            if ($json === false) {
-                $json = '{"success":false,"message":"Erro ao gerar resposta JSON."}';
-            }
-
-            $response->getBody()->write($json);
-
-            return $response
-                ->withHeader(
-                    'Content-Type',
-                    'application/json; charset=utf-8'
-                )
-                ->withStatus(500);
-        }
-    });
-
-    $app->post('/polls', function ($request, $response) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->create($request, $response);
-    })->add($authMiddleware);
-
-    $app->get('/polls', function ($request, $response) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->index($request, $response);
-    });
-
-    $app->post('/polls/{id:[0-9]+}/vote', function (
-        $request,
-        $response,
-        $args
-    ) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $voteModel = new Vote($pdo);
-
-        $voteService = new VoteService(
-            $voteModel,
-            $pollModel
-        );
-
-        $voteController = new VoteController(
-            $voteService
-        );
-
-        return $voteController->create(
-            $request,
-            $response,
-            $args
-        );
-    })->add($authMiddleware);
-
-    $app->get('/polls/{id:[0-9]+}', function (
-        $request,
-        $response,
-        $args
-    ) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->show(
-            $request,
-            $response,
-            $args
-        );
-    });
-
-    $app->get('/db-test', function ($request, $response) {
-        try {
-            $pdo = Database::getConnection();
-            $result = $pdo->query('SELECT 1 AS test')->fetch();
-
-            $data = [
-                'success' => true,
-                'message' => 'Conexão com o banco funcionando',
-                'result' => $result
-            ];
-
-            $status = 200;
-        } catch (\Throwable $error) {
-            $data = [
-                'success' => false,
-                'message' => 'Falha na conexão com o banco',
-                'error' => $error->getMessage()
-            ];
-
-            $status = 500;
-        }
-
-        $json = json_encode(
-            $data,
-            JSON_UNESCAPED_UNICODE
-            | JSON_UNESCAPED_SLASHES
-            | JSON_INVALID_UTF8_SUBSTITUTE
-        );
-
-        if ($json === false) {
-            $json = '{"success":false,"message":"Erro ao gerar JSON."}';
-        }
-
-        $response->getBody()->write($json);
-
-        return $response
-            ->withHeader('Content-Type', 'application/json; charset=utf-8')
-            ->withStatus($status);
-    });
-
-    $app->put('/polls/{id:[0-9]+}', function (
-        $request,
-        $response,
-        $args
-    ) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->update(
-            $request,
-            $response,
-            $args
-        );
-    })->add($authMiddleware);
-
-    $app->delete('/polls/{id:[0-9]+}', function (
-        $request,
-        $response,
-        $args
-    ) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->delete(
-            $request,
-            $response,
-            $args
-        );
-    })->add($authMiddleware);
-
-    $app->get('/env-test', function ($request, $response) {
-        $host = $_ENV['DB_HOST'] ?? '';
-
-        $data = [
-            'host' => $host,
-            'host_debug' => '[' . $host . ']',
-            'host_length' => strlen($host),
-            'host_hex' => bin2hex($host),
-            'port' => $_ENV['DB_PORT'] ?? null
-        ];
-
-        $response->getBody()->write(
-            json_encode($data, JSON_UNESCAPED_UNICODE)
-        );
-
-        return $response->withHeader(
-            'Content-Type',
-            'application/json'
-        );
-    });
-
-    $app->get('/polls/{id:[0-9]+}/results', function (
-        $request,
-        $response,
-        $args
-    ) {
-        $pdo = Database::getConnection();
-
-        $pollModel = new Poll($pdo);
-        $pollService = new PollService($pollModel);
-        $pollController = new PollController($pollService);
-
-        return $pollController->results(
-            $request,
-            $response,
-            $args
-        );
-    });
+    /*
+     * Votação
+     */
+    $app->post(
+        '/polls/{id:[0-9]+}/vote',
+        [$voteController, 'create']
+    )->add($authMiddleware);
 };

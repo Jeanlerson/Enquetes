@@ -2,12 +2,13 @@
 
 namespace App\Controllers;
 
+use App\Helpers\JsonResponse;
 use App\Services\PollService;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Throwable;
 use RuntimeException;
+use Throwable;
 
 class PollController
 {
@@ -32,7 +33,7 @@ class PollController
                 (int) $authenticatedUser['id']
             );
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -42,7 +43,7 @@ class PollController
                 201
             );
         } catch (InvalidArgumentException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -51,12 +52,11 @@ class PollController
                 422
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível criar a enquete.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível criar a enquete.'
                 ],
                 500
             );
@@ -70,7 +70,7 @@ class PollController
         try {
             $polls = $this->service->getAll();
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -79,42 +79,15 @@ class PollController
                 200
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível listar as enquetes.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível listar as enquetes.'
                 ],
                 500
             );
         }
-    }
-
-    private function jsonResponse(
-        Response $response,
-        array $data,
-        int $status
-    ): Response {
-        $json = json_encode(
-            $data,
-            JSON_UNESCAPED_UNICODE
-            | JSON_UNESCAPED_SLASHES
-            | JSON_INVALID_UTF8_SUBSTITUTE
-        );
-
-        if ($json === false) {
-            $json = '{"success":false,"message":"Erro ao gerar JSON."}';
-        }
-
-        $response->getBody()->write($json);
-
-        return $response
-            ->withHeader(
-                'Content-Type',
-                'application/json; charset=utf-8'
-            )
-            ->withStatus($status);
     }
 
     public function show(
@@ -127,7 +100,7 @@ class PollController
 
             $poll = $this->service->getById($pollId);
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -136,7 +109,7 @@ class PollController
                 200
             );
         } catch (InvalidArgumentException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -145,7 +118,7 @@ class PollController
                 422
             );
         } catch (RuntimeException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -154,12 +127,11 @@ class PollController
                 404
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível carregar a enquete.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível carregar a enquete.'
                 ],
                 500
             );
@@ -186,7 +158,7 @@ class PollController
                 $data
             );
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -196,7 +168,7 @@ class PollController
                 200
             );
         } catch (InvalidArgumentException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -211,7 +183,7 @@ class PollController
                 default => 400
             };
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -220,12 +192,11 @@ class PollController
                 $status
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível atualizar a enquete.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível atualizar a enquete.'
                 ],
                 500
             );
@@ -249,7 +220,7 @@ class PollController
                 (int) $authenticatedUser['id']
             );
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -258,7 +229,7 @@ class PollController
                 200
             );
         } catch (InvalidArgumentException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -273,7 +244,7 @@ class PollController
                 default => 400
             };
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -282,12 +253,11 @@ class PollController
                 $status
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível excluir a enquete.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível excluir a enquete.'
                 ],
                 500
             );
@@ -304,7 +274,7 @@ class PollController
 
             $results = $this->service->getResults($pollId);
 
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => true,
@@ -313,7 +283,7 @@ class PollController
                 200
             );
         } catch (InvalidArgumentException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -322,7 +292,7 @@ class PollController
                 422
             );
         } catch (RuntimeException $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
@@ -331,12 +301,11 @@ class PollController
                 404
             );
         } catch (Throwable $error) {
-            return $this->jsonResponse(
+            return JsonResponse::create(
                 $response,
                 [
                     'success' => false,
-                    'message' => 'Não foi possível carregar os resultados.',
-                    'debug' => $error->getMessage()
+                    'message' => 'Não foi possível carregar os resultados.'
                 ],
                 500
             );

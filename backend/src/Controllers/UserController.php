@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use RuntimeException;
 use Throwable;
+use App\Helpers\JsonResponse;
 
 class UserController
 {
@@ -57,7 +58,6 @@ class UserController
                 [
                     'success' => false,
                     'message' => 'Não foi possível cadastrar o usuário.',
-                    'debug' => $error->getMessage()
                 ],
                 500
             );
@@ -106,7 +106,6 @@ class UserController
                 [
                     'success' => false,
                     'message' => 'Não foi possível realizar o login.',
-                    'debug' => $error->getMessage()
                 ],
                 500
             );
