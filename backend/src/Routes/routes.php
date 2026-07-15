@@ -50,6 +50,13 @@ return function ($app) {
         $app->getResponseFactory()
     );
 
+    $app->options('/{routes:.+}', function (
+        $request,
+        $response
+    ) {
+        return $response;
+    });
+
     $app->get('/health', function (
         $request,
         $response
