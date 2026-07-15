@@ -108,4 +108,57 @@ class Poll
 
         return $statement->fetchAll();
     }
+
+    // Dados da enquete
+    public function findById(int $pollId): array|false
+    {
+        $sql = '
+            SELECT
+                polls.id,
+                polls.user_id,
+                polls.title,
+                polls.description,
+                polls.expires_at,
+                polls.created_at,
+                users.name AS author_name
+            FROM polls
+            INNER JOIN users
+                ON users.id = polls.user_id
+            WHERE polls.id = :poll_id
+            LIMIT 1
+        ';
+
+        $statement = $this->db->prepare($sql);
+        $statement->execute([
+            'poll_id' => $pollId
+        ]);
+
+        return $statement->fetch();
+    }
+
+    // Opções e votos
+    public function findOptionsWithVotes(int $pollId): array
+    {
+        $sql = '
+            SELECT
+                options.id,
+                options.option_text,
+                COUNT(votes.id) AS votes_count
+            FROM options
+            LEFT JOIN votes
+                ON votes.option_id = options.id
+            WHERE options.poll_id = :poll_id
+            GROUP BY
+                options.id,
+                options.option_text
+            ORDER BY options.id ASC
+        ';
+
+        $statement = $this->db->prepare($sql);
+        $statement->execute([
+            'poll_id' => $pollId
+        ]);
+
+        return $statement->fetchAll();
+    }
 }

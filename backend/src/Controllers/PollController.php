@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Throwable;
+use RuntimeException;
 
 class PollController
 {
@@ -114,5 +115,54 @@ class PollController
                 'application/json; charset=utf-8'
             )
             ->withStatus($status);
+    }
+
+    public function show(
+        Request $request,
+        Response $response,
+        array $args
+    ): Response {
+        try {
+            $pollId = (int) ($args['id'] ?? 0);
+
+            $poll = $this->service->getById($pollId);
+
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => true,
+                    'poll' => $poll
+                ],
+                200
+            );
+        } catch (InvalidArgumentException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                422
+            );
+        } catch (RuntimeException $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => $error->getMessage()
+                ],
+                404
+            );
+        } catch (Throwable $error) {
+            return $this->jsonResponse(
+                $response,
+                [
+                    'success' => false,
+                    'message' => 'Não foi possível carregar a enquete.',
+                    'debug' => $error->getMessage()
+                ],
+                500
+            );
+        }
     }
 }

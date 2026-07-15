@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Poll;
 use DateTime;
 use InvalidArgumentException;
+use RuntimeException;
 
 class PollService
 {
@@ -132,5 +133,67 @@ class PollService
         }
 
         return new \DateTime($expiresAt) <= new \DateTime();
+    }
+
+    public function getById(int $pollId): array
+    {
+        if ($pollId <= 0) {
+            throw new InvalidArgumentException(
+                'O identificador da enquete é inválido.'
+            );
+        }
+
+        $poll = $this->pollModel->findById($pollId);
+
+        if (!$poll) {
+            throw new RuntimeException(
+                'Enquete não encontrada.'
+            );
+        }
+
+        $options = $this->pollModel->findOptionsWithVotes($pollId);
+
+        $totalVotes = array_sum(
+            array_map(
+                fn (array $option): int =>
+                    (int) $option['votes_count'],
+                $options
+            )
+        );
+
+        $formattedOptions = array_map(
+            function (array $option) use ($totalVotes): array {
+                $votesCount = (int) $option['votes_count'];
+
+                $percentage = $totalVotes > 0
+                    ? round(($votesCount / $totalVotes) * 100, 2)
+                    : 0;
+
+                return [
+                    'id' => (int) $option['id'],
+                    'text' => $option['option_text'],
+                    'votes_count' => $votesCount,
+                    'percentage' => $percentage
+                ];
+            },
+            $options
+        );
+
+        return [
+            'id' => (int) $poll['id'],
+            'title' => $poll['title'],
+            'description' => $poll['description'],
+            'expires_at' => $poll['expires_at'],
+            'created_at' => $poll['created_at'],
+            'author' => [
+                'id' => (int) $poll['user_id'],
+                'name' => $poll['author_name']
+            ],
+            'total_votes' => $totalVotes,
+            'is_expired' => $this->isExpired(
+                $poll['expires_at']
+            ),
+            'options' => $formattedOptions
+        ];
     }
 }

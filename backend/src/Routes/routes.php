@@ -153,6 +153,24 @@ return function ($app) {
         return $pollController->index($request, $response);
     });
 
+    $app->get('/polls/{id:[0-9]+}', function (
+        $request,
+        $response,
+        $args
+    ) {
+        $pdo = Database::getConnection();
+
+        $pollModel = new Poll($pdo);
+        $pollService = new PollService($pollModel);
+        $pollController = new PollController($pollService);
+
+        return $pollController->show(
+            $request,
+            $response,
+            $args
+        );
+    });
+
     $app->get('/db-test', function ($request, $response) {
         try {
             $pdo = Database::getConnection();
