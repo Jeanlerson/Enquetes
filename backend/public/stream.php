@@ -16,7 +16,9 @@ header('Content-Type: text/event-stream; charset=utf-8');
 header('Cache-Control: no-cache');
 header('Connection: keep-alive');
 
-header('Access-Control-Allow-Origin: http://localhost:8000');
+$frontendUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:5173';
+
+header("Access-Control-Allow-Origin: {$frontendUrl}");
 
 header('X-Accel-Buffering: no');
 
