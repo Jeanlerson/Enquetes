@@ -1,13 +1,6 @@
-# Ignora pastas de dependências
-node_modules/
-vendor/
-
-# Ignora variáveis de ambiente e senhas
-.env
-
-# Ignora arquivos gerados pelo sistema operacional
+/backend/vendor/
+/backend/.env
+/frontend/node_modules/
+/frontend/dist/
 .DS_Store
 Thumbs.db
-
-# Ignora arquivos de log
-*.log

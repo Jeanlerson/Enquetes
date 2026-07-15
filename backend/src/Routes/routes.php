@@ -15,65 +15,41 @@ use App\Services\UserService;
 use App\Services\VoteService;
 
 return function ($app) {
-    /*
-     * Dependências compartilhadas
-     */
     $pdo = Database::getConnection();
 
     $jwtService = new JwtService();
 
-    /*
-     * Usuários e autenticação
-     */
     $userModel = new User($pdo);
-
     $userService = new UserService(
         $userModel,
         $jwtService
     );
-
     $userController = new UserController(
         $userService
     );
 
-    /*
-     * Enquetes
-     */
     $pollModel = new Poll($pdo);
-
     $pollService = new PollService(
         $pollModel
     );
-
     $pollController = new PollController(
         $pollService
     );
 
-    /*
-     * Votos
-     */
     $voteModel = new Vote($pdo);
-
     $voteService = new VoteService(
         $voteModel,
         $pollModel
     );
-
     $voteController = new VoteController(
         $voteService
     );
 
-    /*
-     * Middleware
-     */
     $authMiddleware = new AuthMiddleware(
         $jwtService,
         $app->getResponseFactory()
     );
 
-    /*
-     * Saúde da API
-     */
     $app->get('/health', function (
         $request,
         $response
@@ -83,83 +59,25 @@ return function ($app) {
             [
                 'success' => true,
                 'message' => 'API funcionando.'
-            ],
-            200
+            ]
         );
     });
 
-    /*
-     * Autenticação
-     */
-    $app->post(
-        '/register',
-        [$userController, 'register']
+    (require __DIR__ . '/auth.php')(
+        $app,
+        $userController,
+        $authMiddleware
     );
 
-    $app->post(
-        '/login',
-        [$userController, 'login']
+    (require __DIR__ . '/polls.php')(
+        $app,
+        $pollController,
+        $authMiddleware
     );
 
-    $app->get('/me', function (
-        $request,
-        $response
-    ) {
-        $user = $request->getAttribute(
-            'authenticatedUser'
-        );
-
-        return JsonResponse::create(
-            $response,
-            [
-                'success' => true,
-                'user' => $user
-            ],
-            200
-        );
-    })->add($authMiddleware);
-
-    /*
-     * Enquetes públicas
-     */
-    $app->get(
-        '/polls',
-        [$pollController, 'index']
+    (require __DIR__ . '/votes.php')(
+        $app,
+        $voteController,
+        $authMiddleware
     );
-
-    $app->get(
-        '/polls/{id:[0-9]+}',
-        [$pollController, 'show']
-    );
-
-    $app->get(
-        '/polls/{id:[0-9]+}/results',
-        [$pollController, 'results']
-    );
-
-    /*
-     * Enquetes protegidas
-     */
-    $app->post(
-        '/polls',
-        [$pollController, 'create']
-    )->add($authMiddleware);
-
-    $app->put(
-        '/polls/{id:[0-9]+}',
-        [$pollController, 'update']
-    )->add($authMiddleware);
-
-    $app->delete(
-        '/polls/{id:[0-9]+}',
-        [$pollController, 'delete']
-    )->add($authMiddleware);
-
-    /*
-     * Votação
-     */
-    $app->post(
-        '/polls/{id:[0-9]+}/vote',
-        [$voteController, 'create']
-    )->add($authMiddleware);
 };
