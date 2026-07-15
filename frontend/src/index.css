@@ -142,3 +142,130 @@ select {
   color: #842029;
   background: #f8d7da;
 }
+
+.page-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.page-heading h1 {
+  margin: 0 0 8px;
+}
+
+.page-heading p {
+  margin: 0;
+  color: #667085;
+}
+
+.poll-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.poll-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dfe4ec;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
+}
+
+.poll-card-header,
+.poll-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.poll-card h2 {
+  margin: 20px 0 10px;
+  font-size: 20px;
+}
+
+.poll-description {
+  margin: 0 0 20px;
+  color: #667085;
+  line-height: 1.5;
+}
+
+.poll-meta {
+  margin-top: auto;
+  color: #667085;
+  font-size: 14px;
+}
+
+.poll-expiration {
+  margin: 16px 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.poll-votes {
+  color: #667085;
+  font-size: 14px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.badge.active {
+  color: #146c43;
+  background: #d1e7dd;
+}
+
+.badge.expired {
+  color: #842029;
+  background: #f8d7da;
+}
+
+.primary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  margin-top: 20px;
+  padding: 11px 16px;
+  color: #ffffff;
+  background: #3056d3;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed #cfd6e2;
+  border-radius: 16px;
+}
+
+@media (max-width: 900px) {
+  .poll-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .page-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .poll-grid {
+    grid-template-columns: 1fr;
+  }
+}
